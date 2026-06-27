@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Diet Plan Management</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f4f4;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .container {
+            margin: 20px auto;
+            width: 320px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px gray;
+        }
+
+        input {
+            width: 90%;
+            padding: 8px;
+            margin: 5px;
+        }
+
+        button {
+            padding: 10px;
+            margin: 5px;
+            background: green;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .delete-btn {
+            background: red;
+        }
+
+        .update-btn {
+            background: orange;
+        }
+
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 90%;
+            background: white;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>🥗 Diet Plan Management (Admin Panel)</h1>
+
+<div class="container">
+
+    <!-- Hidden field for update -->
+    <input id="dietId" type="hidden">
+
+    <input id="userId" placeholder="User ID"><br>
+    <input id="breakfast" placeholder="Breakfast"><br>
+    <input id="lunch" placeholder="Lunch"><br>
+    <input id="dinner" placeholder="Dinner"><br>
+    <input id="calories" placeholder="Calories"><br>
+    <input id="suggestion" placeholder="Suggestion"><br>
+
+    <button onclick="assignPlan()">Save / Update Plan</button>
+    <button onclick="loadPlans()">View Plans</button>
+
+</div>
+
+<table id="table">
+
+    <tr>
+        <th>ID</th>
+        <th>User</th>
+        <th>Breakfast</th>
+        <th>Lunch</th>
+        <th>Dinner</th>
+        <th>Calories</th>
+        <th>Suggestion</th>
+        <th>Actions</th>
+    </tr>
+
+</table>
+
+<script>
+
+    // CREATE + UPDATE
+    function assignPlan() {
+
+        let userId = document.getElementById("userId").value;
+        let dietId = document.getElementById("dietId").value;
+
+        let url = dietId
+            ? `http://localhost:8080/diet/update/${dietId}`
+            : `http://localhost:8080/diet/assign/${userId}`;
+
+        let method = dietId ? "PUT" : "POST";
+
+        fetch(url, {
+
+            method: method,
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+
+                breakfast: document.getElementById("breakfast").value,
+                lunch: document.getElementById("lunch").value,
+                dinner: document.getElementById("dinner").value,
+                calories: document.getElementById("calories").value,
+                suggestion: document.getElementById("suggestion").value
+
+            })
+
+        })
+
+            .then(res => res.json())
+
+            .then(data => {
+
+                alert("Operation Successful!");
+
+                clearForm();
+
+                loadPlans();
+
+            });
+    }
+
+
+    // READ
+    function loadPlans() {
+
+        fetch("http://localhost:8080/diet/all")
+
+            .then(res => res.json())
+
+            .then(data => {
+
+                let table = document.getElementById("table");
+
+                table.innerHTML = `
+
+            <tr>
+                <th>ID</th>
+                <th>User</th>
+                <th>Breakfast</th>
+                <th>Lunch</th>
+                <th>Dinner</th>
+                <th>Calories</th>
+                <th>Suggestion</th>
+                <th>Actions</th>
+            </tr>
+
+            `;
+
+                data.forEach(plan => {
+
+                    table.innerHTML += `
+
+                <tr>
+
+                    <td>${plan.id}</td>
+
+                    <td>${plan.user ? plan.user.name : "N/A"}</td>
+
+                    <td>${plan.breakfast}</td>
+
+                    <td>${plan.lunch}</td>
+
+                    <td>${plan.dinner}</td>
+
+                    <td>${plan.calories}</td>
+
+                    <td>${plan.suggestion}</td>
+
+                    <td>
+
+                        <button class="update-btn"
+                        onclick="fillForm(
+                            ${plan.id},
+                            '${plan.breakfast}',
+                            '${plan.lunch}',
+                            '${plan.dinner}',
+                            ${plan.calories},
+                            '${plan.suggestion}'
+                        )">
+
+                        Update
+
+                        </button>
+
+                        <button class="delete-btn"
+                        onclick="deletePlan(${plan.id})">
+
+                        Delete
+
+                        </button>
+
+                    </td>
+
+                </tr>
+
+                `;
+                });
+
+            });
+    }
+
+
+    // DELETE
+    function deletePlan(id) {
+
+        fetch(`http://localhost:8080/diet/delete/${id}`, {
+
+            method: "DELETE"
+
+        })
+
+            .then(res => res.text())
+
+            .then(data => {
+
+                alert(data);
+
+                loadPlans();
+
+            });
+    }
+
+
+    // FILL FORM FOR UPDATE
+    function fillForm(id, breakfast, lunch, dinner, calories, suggestion) {
+
+        document.getElementById("dietId").value = id;
+
+        document.getElementById("breakfast").value = breakfast;
+
+        document.getElementById("lunch").value = lunch;
+
+        document.getElementById("dinner").value = dinner;
+
+        document.getElementById("calories").value = calories;
+
+        document.getElementById("suggestion").value = suggestion;
+    }
+
+
+    // CLEAR FORM
+    function clearForm() {
+
+        document.getElementById("dietId").value = "";
+
+        document.getElementById("breakfast").value = "";
+
+        document.getElementById("lunch").value = "";
+
+        document.getElementById("dinner").value = "";
+
+        document.getElementById("calories").value = "";
+
+        document.getElementById("suggestion").value = "";
+    }
+
+</script>
+
+</body>
+</html>
